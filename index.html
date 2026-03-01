@@ -18,27 +18,43 @@
             position: relative;
         }
 
-        /* Deep space bg with subtle starry glow */
-        .space {
+        /* Star canvas */
+        #stars-canvas {
             position: absolute;
             inset: 0;
-            background: radial-gradient(circle at 15% 25%, rgba(80,70,140,0.04) 0%, transparent 40%),
-                        radial-gradient(circle at 85% 75%, rgba(100,80,160,0.03) 0%, transparent 50%);
-            pointer-events: none;
             z-index: 1;
+            pointer-events: none;
         }
 
-        /* Subtle grid floor with depth */
-        .floor {
+        /* Perspective grid floor */
+        .grid-floor {
             position: absolute;
-            bottom: 0; left: 0; right: 0;
-            height: 70%;
-            background: linear-gradient(to bottom, transparent 30%, #0a0a0a 100%),
-                        repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(40,40,60,0.08) 2px, rgba(40,40,60,0.08) 4px);
-            transform: perspective(1200px) rotateX(65deg);
-            transform-origin: bottom;
-            opacity: 0.35;
-            z-index: 0;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200%;
+            height: 55%;
+            z-index: 2;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .grid-floor svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Subtle sweep/glow lines like the arcs in the image */
+        .arc-lines {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .arc-lines svg {
+            width: 100%;
+            height: 100%;
         }
 
         .content {
@@ -105,37 +121,141 @@
             0%, 100% { opacity: 0.95; text-shadow: 0 0 25px rgba(106,79,255,0.15); }
             50% { opacity: 1; text-shadow: 0 0 45px rgba(106,79,255,0.3); }
         }
-
-        /* Tiny purple cursor line */
-        .cursor-glow {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            width: 1px;
-            height: 180px;
-            background: linear-gradient(to bottom, transparent, #7a5cff, transparent);
-            transform: translate(-50%, -50%);
-            animation: line-breathe 6s infinite;
-            opacity: 0.25;
-            pointer-events: none;
-            z-index: 2;
-        }
-
-        @keyframes line-breathe {
-            0%, 100% { height: 180px; opacity: 0.25; }
-            50% { height: 240px; opacity: 0.45; }
-        }
     </style>
 </head>
 <body>
-    <div class="space"></div>
-    <div class="floor"></div>
-    <div class="cursor-glow"></div>
+
+    <!-- Stars -->
+    <canvas id="stars-canvas"></canvas>
+
+    <!-- Subtle arc/sweep lines like the screenshot -->
+    <div class="arc-lines">
+        <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <!-- Long sweeping arc lines emanating from center -->
+            <path d="M 720 420 Q 300 300 -100 600" stroke="rgba(180,200,255,0.08)" stroke-width="1" fill="none"/>
+            <path d="M 720 420 Q 1100 280 1600 580" stroke="rgba(180,200,255,0.07)" stroke-width="1" fill="none"/>
+            <path d="M 720 420 Q 400 350 100 750" stroke="rgba(180,200,255,0.05)" stroke-width="1" fill="none"/>
+            <path d="M 720 420 Q 1050 340 1400 720" stroke="rgba(180,200,255,0.05)" stroke-width="1" fill="none"/>
+            <!-- Small glowing dot -->
+            <circle cx="692" cy="265" r="2" fill="rgba(200,220,255,0.6)"/>
+        </svg>
+    </div>
+
+    <!-- Perspective Grid Floor -->
+    <div class="grid-floor">
+        <svg viewBox="0 0 1440 500" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="fadeUp" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="black" stop-opacity="1"/>
+                    <stop offset="40%" stop-color="black" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="gridColor" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="rgba(100,120,200,0)" />
+                    <stop offset="60%" stop-color="rgba(100,130,220,0.35)" />
+                    <stop offset="100%" stop-color="rgba(80,100,200,0.5)" />
+                </linearGradient>
+                <mask id="gridMask">
+                    <rect width="1440" height="500" fill="white"/>
+                    <rect width="1440" height="500" fill="url(#fadeUp)"/>
+                </mask>
+            </defs>
+
+            <g mask="url(#gridMask)">
+                <!-- Vertical perspective lines converging to vanishing point at top center -->
+                <!-- VP = (720, 0) -->
+                <line x1="720" y1="0" x2="-300" y2="500" stroke="url(#gridColor)" stroke-width="0.7" opacity="0.7"/>
+                <line x1="720" y1="0" x2="-100" y2="500" stroke="url(#gridColor)" stroke-width="0.7" opacity="0.7"/>
+                <line x1="720" y1="0" x2="100" y2="500" stroke="url(#gridColor)" stroke-width="0.7" opacity="0.7"/>
+                <line x1="720" y1="0" x2="300" y2="500" stroke="url(#gridColor)" stroke-width="0.7" opacity="0.7"/>
+                <line x1="720" y1="0" x2="500" y2="500" stroke="url(#gridColor)" stroke-width="0.7" opacity="0.7"/>
+                <line x1="720" y1="0" x2="620" y2="500" stroke="url(#gridColor)" stroke-width="0.7" opacity="0.7"/>
+                <line x1="720" y1="0" x2="720" y2="500" stroke="url(#gridColor)" stroke-width="0.8" opacity="0.9"/>
+                <line x1="720" y1="0" x2="820" y2="500" stroke="url(#gridColor)" stroke-width="0.7" opacity="0.7"/>
+                <line x1="720" y1="0" x2="940" y2="500" stroke="url(#gridColor)" stroke-width="0.7" opacity="0.7"/>
+                <line x1="720" y1="0" x2="1140" y2="500" stroke="url(#gridColor)" stroke-width="0.7" opacity="0.7"/>
+                <line x1="720" y1="0" x2="1340" y2="500" stroke="url(#gridColor)" stroke-width="0.7" opacity="0.7"/>
+                <line x1="720" y1="0" x2="1540" y2="500" stroke="url(#gridColor)" stroke-width="0.7" opacity="0.7"/>
+                <line x1="720" y1="0" x2="1740" y2="500" stroke="url(#gridColor)" stroke-width="0.7" opacity="0.7"/>
+
+                <!-- Horizontal lines with perspective compression -->
+                <line x1="0" y1="500" x2="1440" y2="500" stroke="rgba(100,130,220,0.5)" stroke-width="0.8"/>
+                <line x1="130" y1="440" x2="1310" y2="440" stroke="rgba(100,130,220,0.4)" stroke-width="0.7"/>
+                <line x1="250" y1="390" x2="1190" y2="390" stroke="rgba(100,130,220,0.35)" stroke-width="0.6"/>
+                <line x1="360" y1="345" x2="1080" y2="345" stroke="rgba(100,130,220,0.3)" stroke-width="0.6"/>
+                <line x1="450" y1="305" x2="990" y2="305" stroke="rgba(100,130,220,0.25)" stroke-width="0.5"/>
+                <line x1="530" y1="268" x2="910" y2="268" stroke="rgba(100,130,220,0.2)" stroke-width="0.5"/>
+                <line x1="595" y1="235" x2="845" y2="235" stroke="rgba(100,130,220,0.15)" stroke-width="0.4"/>
+                <line x1="645" y1="205" x2="795" y2="205" stroke="rgba(100,130,220,0.1)" stroke-width="0.4"/>
+                <line x1="685" y1="175" x2="755" y2="175" stroke="rgba(100,130,220,0.08)" stroke-width="0.3"/>
+            </g>
+        </svg>
+    </div>
 
     <div class="content">
         <h1>Pulsar AI</h1>
         <div class="tagline">Intelligent, Fast, Reliable</div>
         <button class="btn" onclick="window.location.href='login.html'">Get Started</button>
     </div>
+
+    <script>
+        const canvas = document.getElementById('stars-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let stars = [];
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initStars();
+        }
+
+        function initStars() {
+            stars = [];
+            const count = 220;
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 0.15 + Math.random() * 0.35;
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height * 0.72,
+                    r: 0.3 + Math.random() * 1.1,
+                    alpha: 0.3 + Math.random() * 0.6,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed * 0.4,
+                    twinkleSpeed: 0.0003 + Math.random() * 0.0008,
+                    twinkleOffset: Math.random() * Math.PI * 2,
+                });
+            }
+        }
+
+        function animate(t) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (const s of stars) {
+                s.x += s.vx;
+                s.y += s.vy;
+
+                if (s.x < 0) s.x = canvas.width;
+                if (s.x > canvas.width) s.x = 0;
+                if (s.y < 0) s.y = canvas.height * 0.72;
+                if (s.y > canvas.height * 0.72) s.y = 0;
+
+                // Very subtle twinkle — just a gentle shimmer
+                const twinkle = Math.sin(t * s.twinkleSpeed * 60 + s.twinkleOffset);
+                const alpha = s.alpha * (0.85 + 0.15 * twinkle);
+
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(200, 215, 255, ${alpha})`;
+                ctx.fill();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+        requestAnimationFrame(animate);
+    </script>
 </body>
 </html>
