@@ -85,6 +85,25 @@
             scrollbar-width: thin;
             scrollbar-color: var(--border) transparent;
         }
+
+        /* ── SEARCH BAR ── */
+        .chat-search-wrap {
+            padding: 8px 10px 4px;
+        }
+        .chat-search {
+            width: 100%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.82rem;
+            padding: 7px 10px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .chat-search:focus { border-color: var(--border-hover); }
+        .chat-search::placeholder { color: var(--text-dim); }
         .chat-list-label {
             font-size: 0.7rem;
             text-transform: uppercase;
@@ -238,6 +257,51 @@
         }
         .msg-time { font-size: 0.7rem; color: var(--text-dim); padding: 0 4px; }
         .message.user .msg-time { text-align: right; }
+
+        /* ── MESSAGE ACTION BUTTONS ── */
+        .msg-actions {
+            display: flex; gap: 4px; margin-top: 4px;
+            opacity: 0; transition: opacity 0.15s;
+        }
+        .message:hover .msg-actions { opacity: 1; }
+        .message.user .msg-actions { justify-content: flex-end; }
+        .msg-action-btn {
+            background: none; border: 1px solid transparent;
+            color: var(--text-dim); cursor: pointer;
+            font-size: 0.72rem; padding: 3px 8px;
+            border-radius: 5px; font-family: 'DM Sans', sans-serif;
+            transition: all 0.15s;
+        }
+        .msg-action-btn:hover { border-color: var(--border); color: var(--text-muted); background: var(--surface2); }
+
+        /* ── EDIT MODE ── */
+        .msg-edit-wrap {
+            display: flex; flex-direction: column; gap: 8px; width: 100%;
+        }
+        .msg-edit-textarea {
+            width: 100%; background: var(--surface);
+            border: 1px solid var(--border-hover);
+            border-radius: 10px; color: var(--text);
+            font-family: 'DM Sans', sans-serif; font-size: 0.92rem;
+            font-weight: 300; padding: 10px 14px; outline: none;
+            resize: none; line-height: 1.6; min-height: 60px;
+            scrollbar-width: thin;
+        }
+        .msg-edit-textarea:focus { border-color: var(--accent); }
+        .msg-edit-actions { display: flex; gap: 8px; justify-content: flex-end; }
+        .msg-edit-save {
+            background: var(--accent); border: none; color: white;
+            padding: 6px 16px; border-radius: 7px; font-size: 0.82rem;
+            cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.2s;
+        }
+        .msg-edit-save:hover { background: #7a5fff; }
+        .msg-edit-cancel {
+            background: none; border: 1px solid var(--border);
+            color: var(--text-muted); padding: 6px 16px;
+            border-radius: 7px; font-size: 0.82rem;
+            cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+        }
+        .msg-edit-cancel:hover { border-color: var(--border-hover); color: var(--text); }
 
         /* ── IMAGE in messages ── */
         .msg-images { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
@@ -593,6 +657,9 @@
     <div class="sidebar-header">
         <span class="logo">Pulsar AI</span>
         <button class="new-chat-btn" onclick="newChat()">+ New</button>
+    </div>
+    <div class="chat-search-wrap">
+        <input class="chat-search" id="chat-search" placeholder="🔍 Search conversations…" oninput="filterChats(this.value)">
     </div>
     <div class="chat-list" id="chat-list">
         <div class="chat-list-label">Conversations</div>
@@ -1243,6 +1310,46 @@ function createMessageEl(msg) {
         bubbleDiv.appendChild(timeDiv);
     }
 
+    // ── Action buttons ──
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'msg-actions';
+
+    if (msg.role === 'assistant') {
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'msg-action-btn';
+        copyBtn.textContent = '⎘ Copy';
+        copyBtn.onclick = () => {
+            navigator.clipboard.writeText(typeof msg.content === 'string' ? msg.content : '');
+            copyBtn.textContent = '✓ Copied';
+            setTimeout(() => copyBtn.textContent = '⎘ Copy', 2000);
+        };
+        actionsDiv.appendChild(copyBtn);
+    }
+
+    if (msg.role === 'user') {
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'msg-action-btn';
+        copyBtn.textContent = '⎘ Copy';
+        const textForCopy = typeof msg.content === 'string' ? msg.content : (msg.content?.find?.(p => p.type === 'text')?.text || '');
+        copyBtn.onclick = () => {
+            navigator.clipboard.writeText(textForCopy);
+            copyBtn.textContent = '✓ Copied';
+            setTimeout(() => copyBtn.textContent = '⎘ Copy', 2000);
+        };
+        actionsDiv.appendChild(copyBtn);
+
+        // Edit button — only for plain text messages
+        if (typeof msg.content === 'string') {
+            const editBtn = document.createElement('button');
+            editBtn.className = 'msg-action-btn';
+            editBtn.textContent = '✎ Edit';
+            editBtn.onclick = () => enterEditMode(msg, div, contentDiv, actionsDiv);
+            actionsDiv.appendChild(editBtn);
+        }
+    }
+
+    bubbleDiv.appendChild(actionsDiv);
+
     div.appendChild(avatarDiv);
     div.appendChild(bubbleDiv);
     return div;
@@ -1257,6 +1364,112 @@ function renderMarkdown(text) {
 function highlightCode() {
     if (typeof hljs !== 'undefined') document.querySelectorAll('.msg-content pre code').forEach(el => hljs.highlightElement(el));
 }
+
+// ─── EDIT MESSAGE ─────────────────────────────────────
+function enterEditMode(msg, msgEl, contentDiv, actionsDiv) {
+    // Replace content with a textarea
+    const originalText = typeof msg.content === 'string' ? msg.content : '';
+    const editWrap = document.createElement('div');
+    editWrap.className = 'msg-edit-wrap';
+
+    const textarea = document.createElement('textarea');
+    textarea.className = 'msg-edit-textarea';
+    textarea.value = originalText;
+    textarea.rows = Math.min(originalText.split('\n').length + 1, 10);
+
+    const editActions = document.createElement('div');
+    editActions.className = 'msg-edit-actions';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'msg-edit-cancel';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.onclick = () => {
+        editWrap.replaceWith(contentDiv);
+        actionsDiv.style.display = '';
+    };
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'msg-edit-save';
+    saveBtn.textContent = 'Save & Resend';
+    saveBtn.onclick = async () => {
+        const newText = textarea.value.trim();
+        if (!newText) return;
+
+        // Find index of this message
+        const idx = messages.indexOf(msg);
+        if (idx === -1) return;
+
+        // Truncate messages from this point and update
+        msg.content = newText;
+        messages.splice(idx + 1); // remove everything after this message
+
+        // Re-render
+        renderMessages();
+
+        // Re-send from this message
+        await resendFromMessage(idx);
+    };
+
+    editActions.appendChild(cancelBtn);
+    editActions.appendChild(saveBtn);
+    editWrap.appendChild(textarea);
+    editWrap.appendChild(editActions);
+
+    actionsDiv.style.display = 'none';
+    contentDiv.replaceWith(editWrap);
+    textarea.focus();
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+}
+
+async function resendFromMessage(fromIdx) {
+    if (isStreaming) return;
+    const inner = document.getElementById('messages-inner');
+
+    const thinkingEl = createThinkingEl();
+    inner.appendChild(thinkingEl);
+    scrollToBottom();
+
+    isStreaming = true;
+    document.getElementById('send-btn').disabled = true;
+
+    try {
+        const model = selectedModelId;
+        const apiMessages = [
+            { role: 'system', content: buildSystemPrompt() },
+            ...messages.filter(m => m.role !== 'system').map(m => ({ role: m.role, content: m.content }))
+        ];
+
+        if (settings.stream) {
+            await streamResponse(apiMessages, model, thinkingEl, inner);
+        } else {
+            await fetchResponse(apiMessages, model, thinkingEl, inner);
+        }
+
+        await saveChat(document.getElementById('chat-title').textContent || 'Chat');
+    } catch(err) {
+        try { thinkingEl.remove(); } catch(e) {}
+        const errMsg = { role: 'assistant', content: `⚠ Error: ${err.message}`, timestamp: Date.now() };
+        messages.push(errMsg);
+        inner.appendChild(createMessageEl(errMsg));
+    } finally {
+        isStreaming = false;
+        document.getElementById('send-btn').disabled = false;
+        scrollToBottom();
+    }
+}
+
+// ─── CONVERSATION SEARCH ──────────────────────────────
+function filterChats(query) {
+    const q = query.trim().toLowerCase();
+    document.querySelectorAll('#chat-list .chat-item').forEach(item => {
+        const title = item.querySelector('.chat-item-title')?.textContent?.toLowerCase() || '';
+        item.style.display = (!q || title.includes(q)) ? '' : 'none';
+    });
+    // Show/hide label
+    const label = document.querySelector('#chat-list .chat-list-label');
+    if (label) label.style.display = q ? 'none' : '';
+}
+
 function copyCode(btn) {
     navigator.clipboard.writeText(btn.nextElementSibling?.textContent || '').then(() => {
         btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 2000);
