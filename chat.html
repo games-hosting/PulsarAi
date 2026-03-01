@@ -838,12 +838,61 @@
                 position: fixed;
                 left: 0; top: 0; bottom: 0;
                 transform: translateX(-100%);
+                box-shadow: 4px 0 40px rgba(0,0,0,0.6);
             }
             .sidebar.open { transform: translateX(0); }
             .menu-btn { display: flex !important; }
+            .messages-inner { padding: 0 14px; }
+            .input-area { padding: 12px 14px 16px; }
+            h1 { font-size: 4rem; }
+        }
+
+        /* Sidebar backdrop overlay (mobile) */
+        .sidebar-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
+            z-index: 9;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .sidebar-backdrop.show {
+            display: block;
+            opacity: 1;
         }
 
         .menu-btn { display: none; }
+
+        /* Keyboard shortcut hint tooltip */
+        .shortcut-hint {
+            position: fixed;
+            bottom: 90px;
+            right: 24px;
+            background: var(--surface2);
+            border: 1px solid var(--border-hover);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            z-index: 50;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: all 0.25s;
+            pointer-events: none;
+            line-height: 1.8;
+        }
+        .shortcut-hint.show { opacity: 1; transform: translateY(0); }
+        .shortcut-hint kbd {
+            background: var(--surface);
+            border: 1px solid var(--border-hover);
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-family: 'DM Mono', monospace;
+            font-size: 0.75rem;
+            color: #c0b0ff;
+        }
 
         /* Auth guard */
         #auth-guard {
@@ -857,11 +906,252 @@
             font-size: 0.9rem;
             color: var(--text-muted);
         }
+
+        /* ── UPGRADE BUTTON ── */
+        .upgrade-btn {
+            width: 100%;
+            padding: 9px;
+            background: linear-gradient(135deg, rgba(106,79,255,0.2), rgba(160,100,255,0.15));
+            border: 1px solid rgba(106,79,255,0.4);
+            border-radius: 9px;
+            color: #c0b0ff;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+        .upgrade-btn:hover {
+            background: linear-gradient(135deg, rgba(106,79,255,0.3), rgba(160,100,255,0.25));
+            border-color: rgba(106,79,255,0.7);
+            box-shadow: 0 0 16px rgba(106,79,255,0.2);
+        }
+        .upgrade-btn.plan-pro-active {
+            background: linear-gradient(135deg, rgba(106,79,255,0.25), rgba(80,160,255,0.15));
+            border-color: rgba(80,160,255,0.5);
+            color: #a0d0ff;
+        }
+        .upgrade-btn.plan-nova-active {
+            background: linear-gradient(135deg, rgba(200,130,255,0.2), rgba(255,180,80,0.12));
+            border-color: rgba(200,130,255,0.5);
+            color: #e0b0ff;
+        }
+
+        /* ── PLANS MODAL ── */
+        .plans-modal-inner { max-width: 880px !important; width: 95% !important; }
+        .plans-current-label { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 20px; }
+        .plans-current-label span { color: #c0b0ff; font-weight: 500; }
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 680px) { .plans-grid { grid-template-columns: 1fr; } }
+        .plan-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px 18px 18px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .plan-card:hover { border-color: var(--border-hover); }
+        .plan-card-highlight {
+            border-color: rgba(106,79,255,0.5) !important;
+            background: rgba(106,79,255,0.06);
+            box-shadow: 0 0 30px rgba(106,79,255,0.08);
+        }
+        .plan-card-nova {
+            border-color: rgba(168,85,247,0.4) !important;
+            background: rgba(168,85,247,0.05);
+        }
+        .plan-badge {
+            position: absolute;
+            top: -11px; left: 50%;
+            transform: translateX(-50%);
+            padding: 3px 12px;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .free-badge { background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); }
+        .pro-badge { background: var(--accent); color: white; }
+        .nova-badge { background: linear-gradient(90deg, #a855f7, #f59e0b); color: white; }
+        .plan-name { font-size: 1.1rem; font-weight: 500; color: var(--text); margin-top: 6px; }
+        .plan-price { font-size: 2.2rem; font-weight: 200; color: var(--text); letter-spacing: -1px; line-height: 1; }
+        .plan-per { font-size: 0.85rem; color: var(--text-muted); font-weight: 300; }
+        .plan-desc { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; min-height: 34px; }
+        .plan-divider { border: none; border-top: 1px solid var(--border); margin: 2px 0; }
+        .plan-features { list-style: none; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+        .plan-features li { font-size: 0.82rem; color: var(--text); line-height: 1.4; display: flex; align-items: flex-start; gap: 7px; }
+        .plan-features li .fi { flex-shrink: 0; margin-top: 1px; }
+        .plan-feature-no { color: var(--text-dim) !important; }
+        .plan-btn {
+            width: 100%;
+            padding: 11px;
+            border-radius: 9px;
+            border: none;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.86rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+            font-weight: 400;
+        }
+        .plan-btn-current { background: var(--surface); color: var(--text-muted); cursor: default; border: 1px solid var(--border); }
+        .plan-btn-pro { background: var(--accent); color: white; }
+        .plan-btn-pro:hover { background: #7a5fff; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(106,79,255,0.3); }
+        .plan-btn-nova { background: linear-gradient(90deg, #a855f7, #7c3aed); color: white; }
+        .plan-btn-nova:hover { opacity: 0.92; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(168,85,247,0.3); }
+        .plan-btn-active { background: var(--surface); color: var(--text-muted); cursor: default; border: 1px solid var(--border); }
+        .plans-footer { font-size: 0.73rem; color: var(--text-dim); text-align: center; line-height: 1.6; }
+
+        /* ── MODEL PICKER ── */
+        .model-picker {
+            position: relative;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 5px 12px;
+            border-radius: 7px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.2s;
+            user-select: none;
+            white-space: nowrap;
+        }
+        .model-picker:hover { border-color: var(--border-hover); color: var(--text); }
+        .model-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            right: 0;
+            background: var(--surface);
+            border: 1px solid var(--border-hover);
+            border-radius: 11px;
+            min-width: 220px;
+            z-index: 50;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            padding: 6px;
+        }
+        .model-menu.open { display: block; }
+        .model-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 9px 12px;
+            border-radius: 7px;
+            font-size: 0.83rem;
+            cursor: pointer;
+            transition: background 0.15s;
+            gap: 10px;
+        }
+        .model-option:hover { background: var(--surface2); }
+        .model-option.active { background: var(--accent-soft); color: #c0b0ff; }
+        .model-option.locked { cursor: pointer; opacity: 0.7; }
+        .model-option-info { display: flex; flex-direction: column; gap: 1px; flex: 1; }
+        .model-option-name { font-size: 0.83rem; color: var(--text); }
+        .model-option.locked .model-option-name { color: var(--text-muted); }
+        .model-option-tag {
+            font-size: 0.67rem;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .tag-free { background: rgba(100,200,100,0.12); color: #80d080; border: 1px solid rgba(100,200,100,0.2); }
+        .tag-pro { background: rgba(106,79,255,0.15); color: #c0b0ff; border: 1px solid rgba(106,79,255,0.3); }
+        .tag-nova { background: linear-gradient(90deg, rgba(168,85,247,0.15), rgba(245,158,11,0.1)); color: #e0b0ff; border: 1px solid rgba(168,85,247,0.3); }
+        .lock-icon { font-size: 0.8rem; opacity: 0.5; }
+
+        /* ── PAYWALL FLASH ── */
+        .paywall-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 300;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(8px);
+        }
+        .paywall-overlay.show { opacity: 1; pointer-events: all; }
+        .paywall-box {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 36px 32px 28px;
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+            border: 1px solid var(--border-hover);
+            box-shadow: 0 0 60px rgba(106,79,255,0.2);
+            transform: scale(0.92);
+            transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .paywall-overlay.show .paywall-box { transform: scale(1); }
+        .paywall-emoji { font-size: 2.8rem; margin-bottom: 12px; }
+        .paywall-title { font-size: 1.3rem; font-weight: 400; margin-bottom: 8px; color: var(--text); }
+        .paywall-sub { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 6px; line-height: 1.6; }
+        .paywall-model-name {
+            display: inline-block;
+            background: var(--accent-soft);
+            border: 1px solid var(--border-hover);
+            color: #c0b0ff;
+            padding: 3px 12px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            margin-bottom: 20px;
+        }
+        .paywall-plans { display: flex; gap: 10px; margin-bottom: 16px; }
+        .paywall-plan-btn {
+            flex: 1;
+            padding: 12px 8px;
+            border-radius: 11px;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .paywall-plan-btn:hover { border-color: var(--border-hover); background: var(--accent-soft); }
+        .paywall-plan-btn.highlight {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+        .paywall-plan-btn.highlight:hover { background: #7a5fff; }
+        .paywall-plan-price { font-size: 0.75rem; opacity: 0.7; }
+        .paywall-dismiss { font-size: 0.78rem; color: var(--text-dim); cursor: pointer; transition: color 0.2s; background: none; border: none; font-family: 'DM Sans', sans-serif; }
+        .paywall-dismiss:hover { color: var(--text-muted); }
     </style>
 </head>
 <body>
 
 <div id="auth-guard">Checking session…</div>
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
+<div class="shortcut-hint" id="shortcut-hint">
+    <div><kbd>Ctrl</kbd> + <kbd>K</kbd> — New chat</div>
+    <div><kbd>Ctrl</kbd> + <kbd>/</kbd> — Settings</div>
+    <div><kbd>Ctrl</kbd> + <kbd>E</kbd> — Clear chat</div>
+    <div><kbd>Esc</kbd> — Close sidebar / modal</div>
+</div>
 
 <!-- Sidebar -->
 <aside class="sidebar" id="sidebar">
@@ -881,6 +1171,9 @@
             </div>
             <span class="user-name" id="user-display-name">Loading…</span>
         </div>
+        <button class="upgrade-btn" onclick="openPlans()" id="sidebar-upgrade-btn">
+            <span id="sidebar-plan-label">⚡ Upgrade Plan</span>
+        </button>
         <div class="sidebar-actions">
             <button class="sidebar-action-btn" onclick="openSettings()">⚙ Settings</button>
             <button class="sidebar-action-btn" onclick="signOut()">Sign out</button>
@@ -896,14 +1189,17 @@
             <span class="chat-title" id="chat-title">New conversation</span>
         </div>
         <div class="topbar-actions">
-            <select class="model-select" id="model-select" onchange="saveModelPref()">
-                <option value="llama-3.3-70b-versatile">Llama 3.3 70B</option>
-                <option value="llama-3.1-8b-instant">Llama 3.1 8B (fast)</option>
-                <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
-                <option value="gemma2-9b-it">Gemma 2 9B</option>
-                <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 70B</option>
-            </select>
+            <!-- Custom model picker -->
+            <div class="model-picker" id="model-picker" onclick="toggleModelMenu()">
+                <span id="model-picker-label">Llama 3.1 8B</span>
+                <span style="font-size:0.7rem;opacity:0.5;margin-left:4px;">▾</span>
+                <div class="model-menu" id="model-menu" onclick="event.stopPropagation()">
+                    <!-- populated by JS -->
+                </div>
+            </div>
             <button class="icon-btn" onclick="clearCurrentChat()" title="Clear chat">🗑</button>
+            <button class="icon-btn" onclick="toggleShortcutHint()" title="Keyboard shortcuts">⌨</button>
+            <button class="icon-btn" onclick="openPlans()" title="Plans" style="color:#c0b0ff;">✦ Plans</button>
         </div>
     </div>
 
@@ -1023,6 +1319,89 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Plans Modal -->
+<div class="modal-overlay" id="plans-modal" onclick="closePlansOutside(event)">
+    <div class="modal plans-modal-inner">
+        <div class="modal-header">
+            <span class="modal-title">Choose your plan</span>
+            <button class="modal-close" onclick="closePlans()">✕</button>
+        </div>
+        <div class="plans-current-label">Your current plan: <span id="current-plan-display">Free</span></div>
+        <div class="plans-grid">
+
+            <!-- FREE -->
+            <div class="plan-card" id="plan-free">
+                <div class="plan-badge free-badge">Current</div>
+                <div class="plan-name">Free</div>
+                <div class="plan-price">€0<span class="plan-per">/mo</span></div>
+                <div class="plan-desc">Perfect for trying out Pulsar AI</div>
+                <ul class="plan-features">
+                    <li>✓ 50 messages per 12 hours</li>
+                    <li>✓ Access to standard models</li>
+                    <li>✓ Chat history (last 20 chats)</li>
+                    <li>✓ Basic customization</li>
+                    <li class="plan-feature-no">✗ Priority responses</li>
+                    <li class="plan-feature-no">✗ Advanced models</li>
+                    <li class="plan-feature-no">✗ Unlimited history</li>
+                </ul>
+                <button class="plan-btn plan-btn-current" disabled>Current Plan</button>
+            </div>
+
+            <!-- PRO -->
+            <div class="plan-card plan-card-highlight" id="plan-pro">
+                <div class="plan-badge pro-badge">Most Popular</div>
+                <div class="plan-name">Pro</div>
+                <div class="plan-price">🍌 9<span class="plan-per">/mo</span></div>
+                <div class="plan-desc">For people who actually use AI</div>
+                <ul class="plan-features">
+                    <li>✓ 500 messages per 12 hours</li>
+                    <li>✓ All standard + fast models</li>
+                    <li>✓ Unlimited chat history</li>
+                    <li>✓ Full customization</li>
+                    <li>✓ Priority responses</li>
+                    <li class="plan-feature-no">✗ Exclusive frontier models</li>
+                    <li class="plan-feature-no">✗ Early access features</li>
+                </ul>
+                <button class="plan-btn plan-btn-pro" onclick="selectPlan('pro')">Upgrade to Pro</button>
+            </div>
+
+            <!-- NOVA -->
+            <div class="plan-card plan-card-nova" id="plan-nova">
+                <div class="plan-badge nova-badge">⭐ Best</div>
+                <div class="plan-name">Nova</div>
+                <div class="plan-price">🍌 24<span class="plan-per">/mo</span></div>
+                <div class="plan-desc">Unleash the full power of Pulsar</div>
+                <ul class="plan-features">
+                    <li>✓ Unlimited messages</li>
+                    <li>✓ All models incl. frontier</li>
+                    <li>✓ Unlimited chat history</li>
+                    <li>✓ Full customization</li>
+                    <li>✓ Fastest priority responses</li>
+                    <li>✓ Early access to new features</li>
+                    <li>✓ Direct support</li>
+                </ul>
+                <button class="plan-btn plan-btn-nova" onclick="selectPlan('nova')">Upgrade to Nova</button>
+            </div>
+
+        </div>
+        <div class="plans-footer">🍌 = banana. Prices are placeholders and will change. Payments coming soon.</div>
+    </div>
+</div>
+
+<!-- Paywall Flash -->
+<div class="paywall-overlay" id="paywall-overlay" onclick="closePaywall(event)">
+    <div class="paywall-box">
+        <div class="paywall-emoji" id="paywall-emoji">🔒</div>
+        <div class="paywall-title" id="paywall-title">Unlock this model</div>
+        <div class="paywall-sub">This model is only available on</div>
+        <div class="paywall-model-name" id="paywall-model-name"></div>
+        <div class="paywall-plans" id="paywall-plans">
+            <!-- populated by JS -->
+        </div>
+        <button class="paywall-dismiss" onclick="closePaywall()">Maybe later</button>
+    </div>
+</div>
+
 <script>
 // ─── CONFIG ───────────────────────────────────────────
 // No API key here — all requests go through your Cloudflare Worker proxy.
@@ -1087,6 +1466,7 @@ auth.onAuthStateChanged(async user => {
 
     loadSettings();
     loadChatList();
+    loadUserPlan();
     newChat();
 });
 
@@ -1113,7 +1493,6 @@ function applySettingsToUI() {
     document.getElementById('set-timestamps').checked = settings.showTimestamps;
     document.getElementById('set-stream').checked = settings.stream;
     document.getElementById('set-autotitle').checked = settings.autoTitle;
-    document.getElementById('model-select').value = settings.model || 'llama-3.3-70b-versatile';
 
     // Tone chips
     document.querySelectorAll('.tone-chip').forEach(c => {
@@ -1465,7 +1844,7 @@ async function sendMessage() {
             ...messages.filter(m => m.role !== 'system').map(m => ({ role: m.role, content: m.content }))
         ];
 
-        const model = document.getElementById('model-select').value;
+        const model = selectedModelId;
 
         if (settings.stream) {
             await streamResponse(apiMessages, model, thinkingEl, inner);
@@ -1617,8 +1996,98 @@ function sendChip(el) {
 }
 
 function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('open');
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    const isOpen = sidebar.classList.contains('open');
+    if (isOpen) {
+        closeSidebar();
+    } else {
+        sidebar.classList.add('open');
+        backdrop.classList.add('show');
+    }
 }
+
+function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-backdrop').classList.remove('show');
+}
+
+let shortcutHintTimeout;
+function toggleShortcutHint() {
+    const hint = document.getElementById('shortcut-hint');
+    hint.classList.toggle('show');
+    clearTimeout(shortcutHintTimeout);
+    if (hint.classList.contains('show')) {
+        shortcutHintTimeout = setTimeout(() => hint.classList.remove('show'), 4000);
+    }
+}
+
+// ─── KEYBOARD SHORTCUTS ───────────────────────────────
+document.addEventListener('keydown', e => {
+    const ctrl = e.ctrlKey || e.metaKey;
+
+    // Ctrl+K — new chat
+    if (ctrl && e.key === 'k') {
+        e.preventDefault();
+        newChat();
+        document.getElementById('user-input').focus();
+        showToast('New chat');
+        return;
+    }
+
+    // Ctrl+/ — open settings
+    if (ctrl && e.key === '/') {
+        e.preventDefault();
+        openSettings();
+        return;
+    }
+
+    // Ctrl+E — clear chat
+    if (ctrl && e.key === 'e') {
+        e.preventDefault();
+        clearCurrentChat();
+        return;
+    }
+
+    // Ctrl+B — toggle sidebar
+    if (ctrl && e.key === 'b') {
+        e.preventDefault();
+        toggleSidebar();
+        return;
+    }
+
+    // Esc — close sidebar/modal/hint
+    if (e.key === 'Escape') {
+        closeSidebar();
+        closeSettings();
+        closePlans();
+        document.getElementById('shortcut-hint').classList.remove('show');
+        return;
+    }
+
+    // ? — show shortcut hint (when not typing)
+    if (e.key === '?' && document.activeElement !== document.getElementById('user-input')) {
+        toggleShortcutHint();
+    }
+});
+
+// ─── SWIPE TO CLOSE SIDEBAR (mobile) ─────────────────
+let touchStartX = 0;
+document.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+}, { passive: true });
+
+document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    // Swipe right from left edge → open sidebar
+    if (touchStartX < 20 && dx > 60) {
+        toggleSidebar();
+    }
+    // Swipe left while sidebar open → close
+    if (dx < -60 && document.getElementById('sidebar').classList.contains('open')) {
+        closeSidebar();
+    }
+}, { passive: true });
 
 function showToast(msg) {
     const t = document.getElementById('toast');
@@ -1629,6 +2098,225 @@ function showToast(msg) {
 
 function escapeHtml(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── MODEL DEFINITIONS ────────────────────────────────
+// tier: 'free' | 'pro' | 'nova'
+const MODELS = [
+    { id: 'llama-3.1-8b-instant',          name: 'Llama 3.1 8B',      tag: 'Fast',        tier: 'free' },
+    { id: 'gemma2-9b-it',                   name: 'Gemma 2 9B',        tag: 'Balanced',    tier: 'free' },
+    { id: 'mixtral-8x7b-32768',             name: 'Mixtral 8x7B',      tag: 'Pro',         tier: 'pro'  },
+    { id: 'llama-3.3-70b-versatile',        name: 'Llama 3.3 70B',     tag: 'Pro',         tier: 'pro'  },
+    { id: 'deepseek-r1-distill-llama-70b',  name: 'DeepSeek R1 70B',   tag: 'Nova Only',   tier: 'nova' },
+];
+
+let selectedModelId = 'llama-3.1-8b-instant';
+
+function getEffectiveTier() {
+    if (ADMIN_EMAILS.includes(currentUser?.email)) return 'nova';
+    return userPlan || 'free';
+}
+
+function tierAllows(modelTier) {
+    const t = getEffectiveTier();
+    const order = ['free','pro','nova'];
+    return order.indexOf(t) >= order.indexOf(modelTier);
+}
+
+function buildModelMenu() {
+    const menu = document.getElementById('model-menu');
+    menu.innerHTML = '';
+    MODELS.forEach(m => {
+        const allowed = tierAllows(m.tier);
+        const isActive = m.id === selectedModelId;
+        const div = document.createElement('div');
+        div.className = 'model-option' + (isActive ? ' active' : '') + (!allowed ? ' locked' : '');
+
+        const tagClass = m.tier === 'free' ? 'tag-free' : m.tier === 'pro' ? 'tag-pro' : 'tag-nova';
+
+        div.innerHTML = `
+            <div class="model-option-info">
+                <span class="model-option-name">${m.name}</span>
+            </div>
+            <span class="model-option-tag ${tagClass}">${m.tag}</span>
+            ${!allowed ? '<span class="lock-icon">🔒</span>' : ''}
+        `;
+
+        div.addEventListener('click', () => {
+            if (!allowed) {
+                closeModelMenu();
+                flashPaywall(m);
+            } else {
+                selectModel(m.id, m.name);
+            }
+        });
+        menu.appendChild(div);
+    });
+}
+
+function selectModel(id, name) {
+    selectedModelId = id;
+    document.getElementById('model-picker-label').textContent = name;
+    settings.model = id;
+    localStorage.setItem('pulsar_settings', JSON.stringify(settings));
+    buildModelMenu();
+    closeModelMenu();
+}
+
+function toggleModelMenu() {
+    const menu = document.getElementById('model-menu');
+    buildModelMenu();
+    menu.classList.toggle('open');
+}
+
+function closeModelMenu() {
+    document.getElementById('model-menu').classList.remove('open');
+}
+
+// Close model menu when clicking outside
+document.addEventListener('click', e => {
+    if (!document.getElementById('model-picker').contains(e.target)) {
+        closeModelMenu();
+    }
+});
+
+// ─── PAYWALL FLASH ────────────────────────────────────
+function flashPaywall(model) {
+    const reqTier = model.tier; // 'pro' or 'nova'
+    document.getElementById('paywall-model-name').textContent = model.name;
+
+    if (reqTier === 'nova') {
+        document.getElementById('paywall-emoji').textContent = '⭐';
+        document.getElementById('paywall-title').textContent = 'Nova exclusive model';
+        document.getElementById('paywall-sub').textContent = `${model.name} is only available on the Nova plan.`;
+    } else {
+        document.getElementById('paywall-emoji').textContent = '⚡';
+        document.getElementById('paywall-title').textContent = 'Pro model';
+        document.getElementById('paywall-sub').textContent = `${model.name} requires Pro or Nova.`;
+    }
+
+    // Build plan buttons
+    const plansDiv = document.getElementById('paywall-plans');
+    plansDiv.innerHTML = '';
+
+    if (reqTier === 'pro') {
+        plansDiv.innerHTML = `
+            <button class="paywall-plan-btn highlight" onclick="paywallUpgrade('pro')">
+                <span>⚡ Pro</span>
+                <span class="paywall-plan-price">🍌9/mo</span>
+            </button>
+            <button class="paywall-plan-btn" onclick="paywallUpgrade('nova')">
+                <span>⭐ Nova</span>
+                <span class="paywall-plan-price">🍌24/mo</span>
+            </button>`;
+    } else {
+        plansDiv.innerHTML = `
+            <button class="paywall-plan-btn highlight" onclick="paywallUpgrade('nova')">
+                <span>⭐ Nova</span>
+                <span class="paywall-plan-price">🍌24/mo</span>
+            </button>`;
+    }
+
+    document.getElementById('paywall-overlay').classList.add('show');
+}
+
+function paywallUpgrade(plan) {
+    closePaywall();
+    selectPlan(plan);
+    openPlans();
+}
+
+function closePaywall(e) {
+    if (e && e.target !== document.getElementById('paywall-overlay')) return;
+    document.getElementById('paywall-overlay').classList.remove('show');
+}
+
+// Override saveModelPref to use new system
+function saveModelPref() {}  // no-op, handled by selectModel now
+const PLANS = {
+    free:  { label: '⚡ Upgrade Plan',     messages: 50,  btnClass: '' },
+    pro:   { label: '✦ Pro Plan',          messages: 500, btnClass: 'plan-pro-active' },
+    nova:  { label: '⭐ Nova Plan',         messages: Infinity, btnClass: 'plan-nova-active' },
+};
+
+let userPlan = 'free';
+
+async function loadUserPlan() {
+    if (!currentUser) return;
+    const doc = await db.collection('users').doc(currentUser.uid).get();
+    userPlan = (doc.exists && doc.data().plan) || 'free';
+    // Load saved model preference
+    const savedModel = settings.model || 'llama-3.1-8b-instant';
+    const modelDef = MODELS.find(m => m.id === savedModel);
+    if (modelDef && tierAllows(modelDef.tier)) {
+        selectedModelId = savedModel;
+        document.getElementById('model-picker-label').textContent = modelDef.name;
+    } else {
+        selectedModelId = 'llama-3.1-8b-instant';
+        document.getElementById('model-picker-label').textContent = 'Llama 3.1 8B';
+    }
+    updatePlanUI();
+}
+
+function updatePlanUI() {
+    const btn = document.getElementById('sidebar-upgrade-btn');
+    const label = document.getElementById('sidebar-plan-label');
+    const p = PLANS[userPlan] || PLANS.free;
+    label.textContent = p.label;
+    btn.className = 'upgrade-btn ' + p.btnClass;
+}
+
+function openPlans() {
+    const modal = document.getElementById('plans-modal');
+    modal.classList.add('open');
+
+    // Update current plan display
+    const names = { free: 'Free', pro: 'Pro', nova: 'Nova' };
+    document.getElementById('current-plan-display').textContent = names[userPlan] || 'Free';
+
+    // Update card states
+    ['free','pro','nova'].forEach(plan => {
+        const card = document.getElementById('plan-' + plan);
+        if (!card) return;
+        const btn = card.querySelector('.plan-btn');
+        const badge = card.querySelector('.plan-badge');
+        if (plan === userPlan) {
+            btn.textContent = 'Current Plan';
+            btn.className = 'plan-btn plan-btn-active';
+            btn.disabled = true;
+            badge.textContent = plan === 'free' ? 'Current' : plan === 'pro' ? '✓ Active' : '⭐ Active';
+        } else {
+            btn.disabled = false;
+            if (plan === 'pro') {
+                btn.textContent = 'Upgrade to Pro';
+                btn.className = 'plan-btn plan-btn-pro';
+                btn.onclick = () => selectPlan('pro');
+            } else if (plan === 'nova') {
+                btn.textContent = 'Upgrade to Nova';
+                btn.className = 'plan-btn plan-btn-nova';
+                btn.onclick = () => selectPlan('nova');
+            } else {
+                btn.textContent = 'Downgrade to Free';
+                btn.className = 'plan-btn plan-btn-current';
+                btn.onclick = () => selectPlan('free');
+            }
+        }
+    });
+}
+
+function closePlans() { document.getElementById('plans-modal').classList.remove('open'); }
+function closePlansOutside(e) { if (e.target === document.getElementById('plans-modal')) closePlans(); }
+
+async function selectPlan(plan) {
+    // Payments not set up yet — just show a coming soon toast and save locally for now
+    if (plan !== 'free') {
+        showToast('Payments coming soon! Plan preview only 🍌');
+    }
+    userPlan = plan;
+    await db.collection('users').doc(currentUser.uid).set({ plan }, { merge: true });
+    updatePlanUI();
+    openPlans(); // refresh the modal state
+    if (plan === 'free') showToast('Downgraded to Free');
 }
 
 // Init temperature display
