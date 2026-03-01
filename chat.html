@@ -1865,7 +1865,7 @@ async function sendMessage() {
         }
 
     } catch (err) {
-        thinkingEl.remove();
+        try { thinkingEl.remove(); } catch(e) {}
         const errMsg = { role: 'assistant', content: `⚠ Error: ${err.message}`, timestamp: Date.now() };
         messages.push(errMsg);
         inner.appendChild(createMessageEl(errMsg));
@@ -2103,11 +2103,11 @@ function escapeHtml(str) {
 // ─── MODEL DEFINITIONS ────────────────────────────────
 // tier: 'free' | 'pro' | 'nova'
 const MODELS = [
-    { id: 'llama-3.1-8b-instant',          name: 'Llama 3.1 8B',      tag: 'Fast',        tier: 'free' },
-    { id: 'gemma2-9b-it',                   name: 'Gemma 2 9B',        tag: 'Balanced',    tier: 'free' },
-    { id: 'mixtral-8x7b-32768',             name: 'Mixtral 8x7B',      tag: 'Pro',         tier: 'pro'  },
-    { id: 'llama-3.3-70b-versatile',        name: 'Llama 3.3 70B',     tag: 'Pro',         tier: 'pro'  },
-    { id: 'deepseek-r1-distill-llama-70b',  name: 'DeepSeek R1 70B',   tag: 'Nova Only',   tier: 'nova' },
+    { id: 'llama-3.1-8b-instant',                    name: 'Llama 3.1 8B',        tag: 'Fast',       tier: 'free' },
+    { id: 'openai/gpt-oss-20b',                      name: 'GPT OSS 20B',          tag: 'Balanced',   tier: 'free' },
+    { id: 'llama-3.3-70b-versatile',                 name: 'Llama 3.3 70B',        tag: 'Pro',        tier: 'pro'  },
+    { id: 'qwen/qwen3-32b',                          name: 'Qwen 3 32B',           tag: 'Pro',        tier: 'pro'  },
+    { id: 'openai/gpt-oss-120b',                     name: 'GPT OSS 120B',         tag: 'Nova Only',  tier: 'nova' },
 ];
 
 let selectedModelId = 'llama-3.1-8b-instant';
