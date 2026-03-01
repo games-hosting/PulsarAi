@@ -938,7 +938,7 @@ auth.onAuthStateChanged(async user => {
 
     // Save email so admin panel can read it
     db.collection('users').doc(user.uid)
-      .collection('meta').doc('profile')
+      .collection('meta').doc('info')
       .set({ email: user.email }, { merge: true })
       .catch(e => console.warn('Could not save email:', e));
 
