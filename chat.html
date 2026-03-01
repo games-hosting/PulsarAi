@@ -1550,18 +1550,25 @@ function loadChatList() {
             docs.forEach(data => {
                 const item = document.createElement('div');
                 item.className = 'chat-item' + (data.id === currentChatId ? ' active' : '');
+                item.dataset.chatId = data.id;
                 item.innerHTML = `
                     <span class="chat-item-title">${escapeHtml(data.title || 'Untitled chat')}</span>
-                    <button class="chat-item-delete" onclick="deleteChat(event,'${data.id}')" title="Delete">✕</button>
+                    <button class="chat-item-delete" data-delete-id="${data.id}" title="Delete">✕</button>
                 `;
-                item.addEventListener('click', () => loadChat(data.id));
+                // Single listener on the item — check if delete btn was clicked
+                item.addEventListener('click', (e) => {
+                    if (e.target.closest('.chat-item-delete')) {
+                        deleteChat(data.id);
+                    } else {
+                        loadChat(data.id);
+                    }
+                });
                 list.appendChild(item);
             });
         });
 }
 
-async function deleteChat(e, chatId) {
-    e.stopPropagation();
+async function deleteChat(chatId) {
     await db.collection('users').doc(currentUser.uid).collection('chats').doc(chatId).delete();
     if (chatId === currentChatId) newChat();
     showToast('Chat deleted');
@@ -1592,24 +1599,26 @@ async function loadChat(chatId) {
 
 async function saveChat(title) {
     if (!currentUser) return;
-    const now = firebase.firestore.FieldValue.serverTimestamp();
-    if (currentChatId) {
-        // Update existing — only touch updatedAt, never createdAt
-        await db.collection('users').doc(currentUser.uid).collection('chats')
-            .doc(currentChatId).set({
+    try {
+        const now = firebase.firestore.FieldValue.serverTimestamp();
+        if (currentChatId) {
+            await db.collection('users').doc(currentUser.uid).collection('chats')
+                .doc(currentChatId).set({
+                    title: title || 'Untitled chat',
+                    messages,
+                    updatedAt: now
+                }, { merge: true });
+        } else {
+            const ref = await db.collection('users').doc(currentUser.uid).collection('chats').add({
                 title: title || 'Untitled chat',
                 messages,
-                updatedAt: now
-            }, { merge: true });
-    } else {
-        // New chat — set both timestamps
-        const ref = await db.collection('users').doc(currentUser.uid).collection('chats').add({
-            title: title || 'Untitled chat',
-            messages,
-            updatedAt: now,
-            createdAt: now
-        });
-        currentChatId = ref.id;
+                updatedAt: now,
+                createdAt: now
+            });
+            currentChatId = ref.id;
+        }
+    } catch(e) {
+        console.warn('saveChat failed:', e);
     }
 }
 
@@ -1767,26 +1776,30 @@ async function checkAndIncrementLimit() {
     if (ADMIN_EMAILS.includes(currentUser?.email)) {
         return { allowed: true, remaining: 999 };
     }
-    const ref = db.collection('users').doc(currentUser.uid);
-    const doc = await ref.get();
-    const data = doc.exists ? doc.data() : {};
-    const now = Date.now();
-    const windowStart = data.limitWindowStart || 0;
-    let count = data.messageCount || 0;
+    try {
+        const ref = db.collection('users').doc(currentUser.uid)
+                      .collection('meta').doc('ratelimit');
+        const doc = await ref.get();
+        const data = doc.exists ? doc.data() : {};
+        const now = Date.now();
+        const windowStart = data.limitWindowStart || 0;
+        let count = data.messageCount || 0;
 
-    if (now - windowStart > WINDOW_MS) {
-        // Window expired — reset
-        await ref.set({ limitWindowStart: now, messageCount: 1 }, { merge: true });
-        return { allowed: true, remaining: LIMIT - 1 };
+        if (now - windowStart > WINDOW_MS) {
+            await ref.set({ limitWindowStart: now, messageCount: 1 });
+            return { allowed: true, remaining: LIMIT - 1 };
+        }
+        if (count >= LIMIT) {
+            const resetIn = Math.ceil((WINDOW_MS - (now - windowStart)) / 60000);
+            return { allowed: false, resetIn };
+        }
+        await ref.set({ messageCount: count + 1 }, { merge: true });
+        return { allowed: true, remaining: LIMIT - count - 1 };
+    } catch(e) {
+        // If Firestore fails for any reason, allow the message anyway
+        console.warn('Rate limit check failed, allowing message:', e);
+        return { allowed: true, remaining: 999 };
     }
-
-    if (count >= LIMIT) {
-        const resetIn = Math.ceil((WINDOW_MS - (now - windowStart)) / 60000);
-        return { allowed: false, resetIn };
-    }
-
-    await ref.set({ messageCount: count + 1 }, { merge: true });
-    return { allowed: true, remaining: LIMIT - count - 1 };
 }
 
 function showLimitBanner(resetIn) {
@@ -2243,8 +2256,13 @@ let userPlan = 'free';
 
 async function loadUserPlan() {
     if (!currentUser) return;
-    const doc = await db.collection('users').doc(currentUser.uid).get();
-    userPlan = (doc.exists && doc.data().plan) || 'free';
+    try {
+        const doc = await db.collection('users').doc(currentUser.uid)
+                             .collection('meta').doc('profile').get();
+        userPlan = (doc.exists && doc.data().plan) || 'free';
+    } catch(e) {
+        userPlan = 'free';
+    }
     // Load saved model preference
     const savedModel = settings.model || 'llama-3.1-8b-instant';
     const modelDef = MODELS.find(m => m.id === savedModel);
@@ -2308,14 +2326,16 @@ function closePlans() { document.getElementById('plans-modal').classList.remove(
 function closePlansOutside(e) { if (e.target === document.getElementById('plans-modal')) closePlans(); }
 
 async function selectPlan(plan) {
-    // Payments not set up yet — just show a coming soon toast and save locally for now
     if (plan !== 'free') {
         showToast('Payments coming soon! Plan preview only 🍌');
     }
     userPlan = plan;
-    await db.collection('users').doc(currentUser.uid).set({ plan }, { merge: true });
+    try {
+        await db.collection('users').doc(currentUser.uid)
+                .collection('meta').doc('profile').set({ plan }, { merge: true });
+    } catch(e) { console.warn('Could not save plan:', e); }
     updatePlanUI();
-    openPlans(); // refresh the modal state
+    openPlans();
     if (plan === 'free') showToast('Downgraded to Free');
 }
 
