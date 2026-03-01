@@ -381,6 +381,51 @@
         }
         .vision-indicator.show { display: block; }
 
+        /* ── TEXT BLOCK CHIPS ── */
+        .text-block-chip {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--surface2); border: 1px solid var(--border-hover);
+            border-radius: 10px; padding: 8px 12px;
+            max-width: 760px; margin: 0 auto 8px;
+            animation: msgIn 0.2s ease;
+        }
+        .text-block-icon {
+            font-size: 1rem; flex-shrink: 0;
+            color: #c0b0ff;
+        }
+        .text-block-info { flex: 1; min-width: 0; }
+        .text-block-name {
+            font-size: 0.8rem; color: var(--text);
+            font-family: 'DM Mono', monospace;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .text-block-size { font-size: 0.7rem; color: var(--text-dim); margin-top: 1px; }
+        .text-block-remove {
+            background: none; border: none; color: var(--text-dim);
+            cursor: pointer; font-size: 0.85rem; padding: 2px 6px;
+            border-radius: 5px; transition: all 0.15s; flex-shrink: 0;
+        }
+        .text-block-remove:hover { color: #ff6b6b; background: rgba(255,107,107,0.1); }
+
+        /* In-chat text block display */
+        .msg-text-block {
+            background: var(--bg); border: 1px solid var(--border);
+            border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;
+            font-family: 'DM Mono', monospace; font-size: 0.78rem;
+            color: var(--text-muted); line-height: 1.5;
+            max-height: 120px; overflow: hidden; position: relative;
+            white-space: pre-wrap; word-break: break-all;
+        }
+        .msg-text-block::after {
+            content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+            height: 36px;
+            background: linear-gradient(transparent, var(--bg));
+        }
+        .msg-text-block-label {
+            font-size: 0.68rem; color: var(--text-dim);
+            font-family: 'DM Mono', monospace; margin-bottom: 4px;
+        }
+
         /* ── MODALS ── */
         .modal-overlay {
             position: fixed; inset: 0;
@@ -605,6 +650,7 @@
 
     <div class="input-area">
         <div class="vision-indicator" id="vision-indicator">👁 Vision model will be used for images</div>
+        <div id="text-block-list"></div>
         <div class="img-preview-strip" id="img-preview-strip"></div>
         <div class="input-wrap">
             <textarea
@@ -796,6 +842,13 @@ let isStreaming = false;
 // ─── PENDING IMAGES ───────────────────────────────────
 // Each entry: { dataUrl: string, mimeType: string }
 let pendingImages = [];
+
+// ─── PENDING TEXT BLOCKS ──────────────────────────────
+// Each entry: { content: string, label: string }
+let pendingTextBlocks = [];
+
+// Threshold: collapse to chip if >300 chars OR contains newlines
+const TEXT_BLOCK_THRESHOLD = 300;
 
 let settings = {
     aiName: "Pulsar",
@@ -1005,11 +1058,12 @@ function removePendingImage(i) {
     renderImagePreviews();
 }
 
-// Paste listener — catches Ctrl+V images
+// Paste listener — catches Ctrl+V images AND large text
 document.addEventListener('paste', e => {
     const items = e.clipboardData?.items;
     if (!items) return;
     let hadImage = false;
+
     for (const item of items) {
         if (item.type.startsWith('image/')) {
             hadImage = true;
@@ -1017,8 +1071,58 @@ document.addEventListener('paste', e => {
             if (file) addImageFile(file);
         }
     }
-    if (hadImage) showToast('Image added ✓');
+    if (hadImage) { showToast('Image added ✓'); return; }
+
+    // Check plain text paste
+    const text = e.clipboardData.getData('text/plain');
+    if (text && (text.length > TEXT_BLOCK_THRESHOLD || text.includes('\n'))) {
+        e.preventDefault(); // don't dump into textarea
+        const label = detectTextBlockLabel(text);
+        pendingTextBlocks.push({ content: text, label });
+        renderTextBlocks();
+        showToast(`${label} attached ✓`);
+    }
 });
+
+function detectTextBlockLabel(text) {
+    const t = text.trimStart();
+    // Rough language detection from first line
+    if (/^(def |class |import |from |async def )/.test(t)) return 'Python snippet';
+    if (/^(function |const |let |var |class |import |export |=>)/.test(t)) return 'JavaScript snippet';
+    if (/^(<\?php|namespace |use )/.test(t)) return 'PHP snippet';
+    if (/^(#include|int main|void |class )/.test(t)) return 'C/C++ snippet';
+    if (/^(SELECT|INSERT|UPDATE|DELETE|CREATE)/i.test(t)) return 'SQL query';
+    if (/^(\{|\[)/.test(t)) return 'JSON / data';
+    if (/^(<[a-zA-Z])/.test(t)) return 'HTML / markup';
+    if (text.includes('\n')) return 'Code / text block';
+    return 'Long text';
+}
+
+function renderTextBlocks() {
+    const list = document.getElementById('text-block-list');
+    list.innerHTML = '';
+    pendingTextBlocks.forEach((block, i) => {
+        const lines = block.content.split('\n').length;
+        const chars = block.content.length;
+        const meta = `${lines} line${lines !== 1 ? 's' : ''} · ${chars} chars`;
+
+        const chip = document.createElement('div');
+        chip.className = 'text-block-chip';
+        chip.innerHTML = `
+            <span class="text-block-icon">📄</span>
+            <div class="text-block-info">
+                <div class="text-block-name">${escapeHtml(block.label)}</div>
+                <div class="text-block-size">${meta}</div>
+            </div>
+            <button class="text-block-remove" onclick="removePendingTextBlock(${i})" title="Remove">✕</button>`;
+        list.appendChild(chip);
+    });
+}
+
+function removePendingTextBlock(i) {
+    pendingTextBlocks.splice(i, 1);
+    renderTextBlocks();
+}
 
 // ─── LIGHTBOX ─────────────────────────────────────────
 function openLightbox(src) {
@@ -1075,6 +1179,20 @@ function createMessageEl(msg) {
 
     const bubbleDiv = document.createElement('div');
     bubbleDiv.className = 'msg-bubble';
+
+    // Render text block chips if present
+    if (msg.role === 'user' && msg.textBlocks?.length > 0) {
+        msg.textBlocks.forEach(block => {
+            const label = document.createElement('div');
+            label.className = 'msg-text-block-label';
+            label.textContent = `📄 ${block.label}`;
+            const pre = document.createElement('div');
+            pre.className = 'msg-text-block';
+            pre.textContent = block.content;
+            bubbleDiv.appendChild(label);
+            bubbleDiv.appendChild(pre);
+        });
+    }
 
     // Render images if message has them
     if (msg.role === 'user' && Array.isArray(msg.content)) {
@@ -1204,7 +1322,7 @@ function showLimitBanner(resetIn) {
 async function sendMessage() {
     const input = document.getElementById('user-input');
     const text = input.value.trim();
-    if ((!text && pendingImages.length === 0) || isStreaming) return;
+    if ((!text && pendingImages.length === 0 && pendingTextBlocks.length === 0) || isStreaming) return;
 
     const limit = await checkAndIncrementLimit();
     if (!limit.allowed) {
@@ -1222,26 +1340,41 @@ async function sendMessage() {
 
     // Build message content
     let msgContent;
-    if (pendingImages.length > 0) {
+    if (imagesForRequest.length > 0) {
         // Vision format
         msgContent = [
-            ...pendingImages.map(img => ({
+            ...imagesForRequest.map(img => ({
                 type: 'image_url',
                 image_url: { url: img.dataUrl }
             })),
             { type: 'text', text: text || 'What is in this image?' }
         ];
     } else {
-        msgContent = text;
+        // Append any text blocks to the message
+        const blockAppend = textBlocksForRequest.length > 0
+            ? '\n\n' + textBlocksForRequest.map(b => `[${b.label}]\n\`\`\`\n${b.content}\n\`\`\``).join('\n\n')
+            : '';
+        msgContent = (text + blockAppend) || '[attached text]';
     }
 
-    const userMsg = { role: 'user', content: msgContent, timestamp: Date.now() };
+    // Store display-friendly version with block metadata for rendering
+    const userMsg = {
+        role: 'user',
+        content: msgContent,
+        timestamp: Date.now(),
+        textBlocks: textBlocksForRequest.length > 0 ? textBlocksForRequest : undefined
+    };
     messages.push(userMsg);
 
     // Clear pending images
     const imagesForRequest = [...pendingImages];
     pendingImages = [];
     renderImagePreviews();
+
+    // Grab and clear pending text blocks
+    const textBlocksForRequest = [...pendingTextBlocks];
+    pendingTextBlocks = [];
+    renderTextBlocks();
 
     const inner = document.getElementById('messages-inner');
     inner.appendChild(createMessageEl(userMsg));
