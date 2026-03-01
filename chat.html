@@ -1448,8 +1448,14 @@ auth.onAuthStateChanged(async user => {
         window.location.href = 'login.html';
         return;
     }
-    currentUser = user;
-    document.getElementById('auth-guard').style.display = 'none';
+currentUser = user;
+document.getElementById('auth-guard').style.display = 'none';
+
+// Save email so admin panel can read it
+db.collection('users').doc(user.uid)
+  .collection('meta').doc('profile')
+  .set({ email: user.email }, { merge: true })
+  .catch(e => console.warn('Could not save email:', e));
 
     // User info in sidebar
     const nameEl = document.getElementById('user-display-name');
