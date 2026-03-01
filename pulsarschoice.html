@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List App</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            height: 100vh;
+            background: #f0f0f0;
+            color: #333;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .content {
+            position: relative;
+            z-index: 3;
+            text-align: center;
+            padding: 20px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 200;
+            letter-spacing: -2px;
+            margin-bottom: 12px;
+        }
+
+        .tagline {
+            font-size: 1.5rem;
+            opacity: 0.75;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        #todo-input {
+            padding: 10px;
+            font-size: 1.5rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        #todo-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #todo-list li {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        #todo-list li:last-child {
+            border-bottom: none;
+        }
+
+        .remove-button {
+            float: right;
+            background: #ff0000;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .remove-button:hover {
+            background: #cc0000;
+        }
+
+        .add-button {
+            padding: 10px 20px;
+            font-size: 1.5rem;
+            background: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .add-button:hover {
+            background: #3e8e41;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="content">
+        <h1>To-Do List App</h1>
+        <div class="tagline">Manage your tasks with ease</div>
+        <input id="todo-input" type="text" placeholder="Enter a new to-do item">
+        <button class="add-button">Add To-Do Item</button>
+        <ul id="todo-list"></ul>
+    </div>
+
+    <script>
+        // Get the HTML elements
+        const todoInput = document.getElementById('todo-input');
+        const todoList = document.getElementById('todo-list');
+        const addButton = document.querySelector('.add-button');
+
+        // Initialize an empty array to store to-do items
+        let todoItems = [];
+
+        // Function to add a new to-do item
+        function addTodoItem() {
+            const itemText = todoInput.value.trim();
+            if (itemText !== '') {
+                const newItem = {
+                    text: itemText,
+                    completed: false
+                };
+                todoItems.push(newItem);
+                renderTodoList();
+                todoInput.value = '';
+            }
+        }
+
+        // Function to render the to-do list
+        function renderTodoList() {
+            const listHtml = todoItems.map((item, index) => {
+                return `
+                    <li>
+                        <input type="checkbox" id="todo-${index}" ${item.completed ? 'checked' : ''}>
+                        <span>${item.text}</span>
+                        <button class="remove-button" data-index="${index}">Remove</button>
+                    </li>
+                `;
+            }).join('');
+            todoList.innerHTML = listHtml;
+        }
+
+        // Function to toggle the completion status of a to-do item
+        function toggleCompletion(event) {
+            const index = event.target.dataset.index;
+            todoItems[index].completed = !todoItems[index].completed;
+            renderTodoList();
+        }
+
+        // Function to remove a to-do item
+        function removeItem(event) {
+            const index = event.target.dataset.index;
+            todoItems.splice(index, 1);
+            renderTodoList();
+        }
+
+        // Add event listeners
+        addButton.addEventListener('click', addTodoItem);
+        todoList.addEventListener('click', (event) => {
+            if (event.target.classList.contains('remove-button')) {
+                removeItem(event);
+            } else if (event.target.type === 'checkbox') {
+                toggleCompletion(event);
+            }
+        });
+
+        // Initial render
+        renderTodoList();
+    </script>
+</body>
+</html>
