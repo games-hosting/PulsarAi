@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulsar AI</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .container {
+            position: relative;
+            z-index: 2;
+        }
+        h1 {
+            font-size: 4.5rem;
+            margin: 0;
+            background: linear-gradient(90deg, #00d4ff, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: float 6s ease-in-out infinite;
+        }
+        .tagline {
+            font-size: 1.8rem;
+            margin: 20px 0 40px;
+            opacity: 0.9;
+            letter-spacing: 2px;
+        }
+        .btn {
+            padding: 18px 50px;
+            font-size: 1.5rem;
+            background: #00aaff;
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 30px rgba(0, 170, 255, 0.4);
+        }
+        .btn:hover {
+            transform: translateY(-5px);
+            background: #0088ff;
+            box-shadow: 0 15px 40px rgba(0, 170, 255, 0.6);
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        .bg-float {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .float-item {
+            position: absolute;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 50%;
+            animation: drift linear infinite;
+        }
+        @keyframes drift {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(var(--drift-x), var(--drift-y)); }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-float">
+        <!-- Some floaty particles for cool bg effect -->
+        <div class="float-item" style="width: 150px; height: 150px; top: 20%; left: 10%; animation-duration: 25s; --drift-x: 300px; --drift-y: 200px;"></div>
+        <div class="float-item" style="width: 200px; height: 200px; top: 60%; left: 70%; animation-duration: 35s; --drift-x: -400px; --drift-y: -150px;"></div>
+        <div class="float-item" style="width: 120px; height: 120px; top: 40%; left: 30%; animation-duration: 28s; --drift-x: 250px; --drift-y: 300px;"></div>
+    </div>
+
+    <div class="container">
+        <h1>Pulsar AI</h1>
+        <div class="tagline">Intelligent, Fast, Reliable</div>
+        <button class="btn" onclick="window.location.href='login.html'">Try Pulsar Now</button>
+    </div>
+</body>
+</html>
