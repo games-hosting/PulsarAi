@@ -1850,7 +1850,7 @@ function closePlansOutside(e) { if (e.target === document.getElementById('plans-
 async function selectPlan(plan) {
     if (plan !== 'free') showToast('Payments coming soon! Plan preview only 🍌');
     userPlan = plan;
-    try { await db.collection('users').doc(currentUser.uid).collection('meta').doc('profile').set({ plan }, { merge: true }); } catch(e) {}
+    // Plan is only written server-side / by admin — never by the client
     updatePlanUI(); openPlans();
     if (plan === 'free') showToast('Downgraded to Free');
 }
