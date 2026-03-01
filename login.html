@@ -4,14 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pulsar AI - Login</title>
-    <!-- Firebase SDK -->
+
+    <!-- Firebase CDN scripts (compat mode for static HTML) -->
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+
     <style>
         body {
             margin: 0;
             height: 100vh;
-            background: #0d0d0d;
+            background: linear-gradient(135deg, #0f0c29, #302b63);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -19,18 +21,28 @@
             color: white;
         }
         .box {
-            background: #111;
+            background: rgba(17, 17, 17, 0.9);
             padding: 50px 60px;
             border-radius: 16px;
-            box-shadow: 0 0 40px rgba(0,170,255,0.3);
+            box-shadow: 0 0 40px rgba(0, 170, 255, 0.4);
             text-align: center;
-            width: 90%; max-width: 500px;
+            width: 90%;
+            max-width: 500px;
+            backdrop-filter: blur(10px);
         }
-        h1 { color: #00aaff; margin-bottom: 10px; }
-        p { font-size: 1.2rem; margin: 20px 0; }
-        .google-btn {
-            padding: 15px 40px;
+        h1 {
+            color: #00aaff;
+            margin-bottom: 10px;
+            font-size: 3rem;
+        }
+        p {
             font-size: 1.3rem;
+            margin: 20px 0 30px;
+            opacity: 0.9;
+        }
+        .google-btn {
+            padding: 16px 50px;
+            font-size: 1.4rem;
             background: #4285f4;
             border: none;
             border-radius: 50px;
@@ -39,52 +51,81 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 12px;
             margin: 0 auto;
-            transition: 0.3s;
+            transition: all 0.3s;
+            box-shadow: 0 8px 25px rgba(66, 133, 244, 0.4);
         }
-        .google-btn:hover { background: #357ae8; transform: scale(1.05); }
-        .google-icon { width: 24px; height: 24px; } /* you can add a Google icon img if you want */
-        #error { color: #ff4444; margin-top: 20px; }
+        .google-btn:hover {
+            background: #357ae8;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(66, 133, 244, 0.6);
+        }
+        #error {
+            color: #ff5555;
+            margin-top: 25px;
+            font-size: 1.1rem;
+        }
+        .loader {
+            display: none;
+            margin: 20px auto;
+            border: 5px solid #444;
+            border-top: 5px solid #00aaff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
     <div class="box">
         <h1>Pulsar AI</h1>
-        <p>One-click login with Google – no passwords, no bs</p>
+        <p>One-click with Google – no passwords, no cap</p>
+
         <button class="google-btn" onclick="googleSignIn()">
-            <!-- <img src="google-icon.png" class="google-icon" alt="G"> --> Sign in with Google
+            Sign in with Google
         </button>
+
+        <div class="loader" id="loader"></div>
         <div id="error"></div>
     </div>
 
     <script>
-        // PASTE YOUR REAL FIREBASE CONFIG HERE
+        // Your exact config from the console
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT.firebaseapp.com",
-            projectId: "YOUR_PROJECT",
-            storageBucket: "YOUR_PROJECT.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyCl5vqdz3IW9FOi9BSr7ri1Yp6zbhYccSY",
+            authDomain: "pulsar-demo-afd85.firebaseapp.com",
+            projectId: "pulsar-demo-afd85",
+            storageBucket: "pulsar-demo-afd85.firebasestorage.app",
+            messagingSenderId: "990326872543",
+            appId: "1:990326872543:web:56920e7cdeb33f3b1acc6a",
+            measurementId: "G-ECRP2SE1R4"
         };
 
+        // Initialize Firebase (compat mode)
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
         function googleSignIn() {
+            document.getElementById("loader").style.display = "block";
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithPopup(provider)
                 .then(() => {
-                    // Redirect to chat page after success
-                    window.location.href = 'chat.html';  // make this your chat page later
+                    // Success – redirect to chat page
+                    window.location.href = 'chat.html';  // create this file next
                 })
                 .catch(err => {
-                    document.getElementById("error").textContent = "Login failed: " + err.message;
+                    document.getElementById("loader").style.display = "none";
+                    document.getElementById("error").textContent = "Google said nah: " + err.message;
                 });
         }
 
-        // Auto-redirect if already signed in
+        // If already signed in, skip straight to chat
         auth.onAuthStateChanged(user => {
             if (user) {
                 window.location.href = 'chat.html';
