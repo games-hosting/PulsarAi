@@ -1058,12 +1058,13 @@ function removePendingImage(i) {
     renderImagePreviews();
 }
 
-// Paste listener — catches Ctrl+V images AND large text
+// Paste listener — catches Ctrl+V images AND large text blocks
 document.addEventListener('paste', e => {
     const items = e.clipboardData?.items;
     if (!items) return;
-    let hadImage = false;
 
+    // Handle image pastes anywhere
+    let hadImage = false;
     for (const item of items) {
         if (item.type.startsWith('image/')) {
             hadImage = true;
@@ -1073,10 +1074,14 @@ document.addEventListener('paste', e => {
     }
     if (hadImage) { showToast('Image added ✓'); return; }
 
-    // Check plain text paste
+    // Only intercept text pastes when focused on the main input
+    if (document.activeElement !== document.getElementById('user-input')) return;
+
     const text = e.clipboardData.getData('text/plain');
-    if (text && (text.length > TEXT_BLOCK_THRESHOLD || text.includes('\n'))) {
-        e.preventDefault(); // don't dump into textarea
+    // Only collapse if it's genuinely large (>300 chars AND has newlines)
+    // Short pastes or single-line pastes go straight into the textarea as normal
+    if (text && text.length > TEXT_BLOCK_THRESHOLD && text.includes('\n')) {
+        e.preventDefault();
         const label = detectTextBlockLabel(text);
         pendingTextBlocks.push({ content: text, label });
         renderTextBlocks();
@@ -1338,6 +1343,15 @@ async function sendMessage() {
     const empty = document.getElementById('empty-state');
     if (empty) empty.style.display = 'none';
 
+    // Grab and clear pending attachments FIRST
+    const imagesForRequest = [...pendingImages];
+    pendingImages = [];
+    renderImagePreviews();
+
+    const textBlocksForRequest = [...pendingTextBlocks];
+    pendingTextBlocks = [];
+    renderTextBlocks();
+
     // Build message content
     let msgContent;
     if (imagesForRequest.length > 0) {
@@ -1365,16 +1379,6 @@ async function sendMessage() {
         textBlocks: textBlocksForRequest.length > 0 ? textBlocksForRequest : undefined
     };
     messages.push(userMsg);
-
-    // Clear pending images
-    const imagesForRequest = [...pendingImages];
-    pendingImages = [];
-    renderImagePreviews();
-
-    // Grab and clear pending text blocks
-    const textBlocksForRequest = [...pendingTextBlocks];
-    pendingTextBlocks = [];
-    renderTextBlocks();
 
     const inner = document.getElementById('messages-inner');
     inner.appendChild(createMessageEl(userMsg));
