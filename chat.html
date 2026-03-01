@@ -1457,6 +1457,11 @@ db.collection('users').doc(user.uid)
   .set({ email: user.email }, { merge: true })
   .catch(e => console.warn('Could not save email:', e));
 
+// Ensure user document exists so admin can list users
+db.collection('users').doc(user.uid)
+  .set({ createdAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true })
+  .catch(e => console.warn('Could not create user doc:', e));
+
     // User info in sidebar
     const nameEl = document.getElementById('user-display-name');
     nameEl.textContent = user.displayName || user.email || 'User';
