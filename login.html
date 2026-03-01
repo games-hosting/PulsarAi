@@ -1,1 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulsar AI - Login</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            background: #0d0d0d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+        .box {
+            background: #111;
+            padding: 50px 60px;
+            border-radius: 16px;
+            box-shadow: 0 0 40px rgba(0,170,255,0.3);
+            text-align: center;
+            width: 90%; max-width: 500px;
+        }
+        h1 { color: #00aaff; margin-bottom: 10px; }
+        p { font-size: 1.2rem; margin: 20px 0; }
+        .google-btn {
+            padding: 15px 40px;
+            font-size: 1.3rem;
+            background: #4285f4;
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 0 auto;
+            transition: 0.3s;
+        }
+        .google-btn:hover { background: #357ae8; transform: scale(1.05); }
+        .google-icon { width: 24px; height: 24px; } /* you can add a Google icon img if you want */
+        #error { color: #ff4444; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>Pulsar AI</h1>
+        <p>One-click login with Google – no passwords, no bs</p>
+        <button class="google-btn" onclick="googleSignIn()">
+            <!-- <img src="google-icon.png" class="google-icon" alt="G"> --> Sign in with Google
+        </button>
+        <div id="error"></div>
+    </div>
 
+    <script>
+        // PASTE YOUR REAL FIREBASE CONFIG HERE
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        function googleSignIn() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .then(() => {
+                    // Redirect to chat page after success
+                    window.location.href = 'chat.html';  // make this your chat page later
+                })
+                .catch(err => {
+                    document.getElementById("error").textContent = "Login failed: " + err.message;
+                });
+        }
+
+        // Auto-redirect if already signed in
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                window.location.href = 'chat.html';
+            }
+        });
+    </script>
+</body>
+</html>
