@@ -1062,11 +1062,16 @@ async function saveChat(title) {
         const now = firebase.firestore.FieldValue.serverTimestamp();
         // Strip image data from stored messages to keep Firestore docs small
         const storable = messages.map(m => {
-            if (m.role === 'user' && Array.isArray(m.content)) {
-                return { ...m, content: m.content.filter(p => p.type === 'text').map(p => p.text).join('') || '[image]' };
-            }
-            return m;
-        });
+    let clean = { ...m };
+    // Strip image data (too large for Firestore)
+    if (clean.role === 'user' && Array.isArray(clean.content)) {
+        clean.content = clean.content.filter(p => p.type === 'text').map(p => p.text).join('') || '[image]';
+    }
+    // Remove undefined fields — Firestore rejects them
+    if (clean.textBlocks === undefined) delete clean.textBlocks;
+    Object.keys(clean).forEach(k => clean[k] === undefined && delete clean[k]);
+    return clean;
+});
         if (currentChatId) {
             await db.collection('users').doc(currentUser.uid).collection('chats')
                 .doc(currentChatId).set({ title: title || 'Untitled chat', messages: storable, updatedAt: now }, { merge: true });
