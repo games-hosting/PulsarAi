@@ -613,13 +613,9 @@ async function loadAllUsers() {
             // Get plan from meta subcollection
             let plan = 'free';
             let msgCount = 0;
-            let storedEmail = null;
             try {
                 const profile = await db.collection('users').doc(uid).collection('meta').doc('profile').get();
-if (profile.exists) {
-    plan = profile.data().plan || 'free';
-    storedEmail = profile.data().email || null;
-}
+                if (profile.exists) plan = profile.data().plan || 'free';
                 const rl = await db.collection('users').doc(uid).collection('meta').doc('ratelimit').get();
                 if (rl.exists) msgCount = rl.data().messageCount || 0;
             } catch(e) {}
@@ -631,7 +627,7 @@ if (profile.exists) {
                 chatCount = chats.size;
             } catch(e) {}
 
-            allUsers.push({ uid, plan, msgCount, chatCount, storedEmail });
+            allUsers.push({ uid, plan, msgCount, chatCount, email: uid });
         }
 
         // Try to get email from auth — we can only show uid unless stored
